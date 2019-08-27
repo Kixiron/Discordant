@@ -5,7 +5,4 @@ authors = ["Kixiron <contact.kixiron@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serenity = { path = "./crates/serenity" }
-lazy_static = "1.4.0"
-dotenv = "0.14.1"
-azul = { git = "https://github.com/maps4print/azul" }
+serenity = { git = "https://github.com/Kixiron/serenity" }

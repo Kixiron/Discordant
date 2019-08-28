@@ -10,19 +10,6 @@ async fn main() {
 
     let (discord, receiver) = backend::Discord::spawn(std::env::var("DISCORD_TOKEN").unwrap());
 
-    // tokio::spawn(async move {
-    //     loop {
-    //         if let Err(_) = discord.send_message(
-    //             599389401914671104,
-    //             "You fool. You absolute buffoon. You think you can challenge me in my own realm? You think you can rebel against my authority? You dare come into my house and upturn my dining chairs, ping me and spill coffee grounds in my Keurig? You thought you were safe in your chain mail armor behind that screen of yours. I will take these <@!599134688052772894>s and destroy you. I didn’t want a ping war, but i didn’t start it.")
-    //         {
-    //             std::thread::sleep(std::time::Duration::from_secs(5));
-    //         } else {
-    //             std::thread::sleep(std::time::Duration::from_secs(1));
-    //         }
-    //     }
-    // });
-
     let (mut download_url_input, mut download_url_output) = mpsc::channel(100);
     let (mut downloaded_images_input, mut downloaded_images_output) = mpsc::channel(100);
 

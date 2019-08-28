@@ -1,3 +1,4 @@
+use dashmap::DashMap;
 use serde_json::Value;
 use serenity::{
     client::{
@@ -38,10 +39,8 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn cache_ready(&self, ctx: Context, guilds: Vec<GuildId>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -49,10 +48,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_create(&self, ctx: Context, channel: Arc<RwLock<GuildChannel>>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -60,10 +57,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn category_create(&self, ctx: Context, category: Arc<RwLock<ChannelCategory>>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -71,10 +66,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn category_delete(&self, ctx: Context, category: Arc<RwLock<ChannelCategory>>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -82,10 +75,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn private_channel_create(&self, ctx: Context, channel: Arc<RwLock<PrivateChannel>>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -93,10 +84,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_delete(&self, ctx: Context, channel: Arc<RwLock<GuildChannel>>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -104,10 +93,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_pins_update(&self, ctx: Context, pin: ChannelPinsUpdateEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -115,10 +102,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_recipient_addition(&self, ctx: Context, group_id: ChannelId, user: User) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -126,10 +111,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_recipient_removal(&self, ctx: Context, group_id: ChannelId, user: User) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -137,10 +120,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn channel_update(&self, ctx: Context, old: Option<Channel>, new: Channel) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -148,10 +129,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_ban_addition(&self, ctx: Context, guild_id: GuildId, banned_user: User) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -159,10 +138,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_ban_removal(&self, ctx: Context, guild_id: GuildId, unbanned_user: User) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -170,10 +147,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_create(&self, ctx: Context, guild: Guild, is_new: bool) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -186,10 +161,8 @@ impl EventHandler for Handler {
         incomplete: PartialGuild,
         full: Option<Arc<RwLock<Guild>>>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -202,10 +175,8 @@ impl EventHandler for Handler {
         guild_id: GuildId,
         current_state: HashMap<EmojiId, Emoji>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -213,10 +184,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_integrations_update(&self, ctx: Context, guild_id: GuildId) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -224,10 +193,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_member_addition(&self, ctx: Context, guild_id: GuildId, new_member: Member) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -241,10 +208,8 @@ impl EventHandler for Handler {
         user: User,
         member_data: Option<Member>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -252,10 +217,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_member_update(&self, ctx: Context, old: Option<Member>, new: Member) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -269,10 +232,8 @@ impl EventHandler for Handler {
         guild_id: GuildId,
         offline_members: HashMap<UserId, Member>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -280,10 +241,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_role_create(&self, ctx: Context, guild_id: GuildId, new: Role) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -297,10 +256,8 @@ impl EventHandler for Handler {
         role_id: RoleId,
         role_data: Option<Role>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -314,10 +271,8 @@ impl EventHandler for Handler {
         old_data: Option<Role>,
         new: Role,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -325,10 +280,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_unavailable(&self, ctx: Context, guild_id: GuildId) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -336,10 +289,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn guild_update(&self, ctx: Context, old_data: Option<Arc<RwLock<Guild>>>, new: PartialGuild) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -347,26 +298,20 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn message(&self, ctx: Context, new_message: Message) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
-        sender
-            .0
-            .send(BackendMsg::MessageAdd(new_message))
-            .expect("Failed to send backend message");
+        if let Err(err) = sender.0.send(BackendMsg::MessageAdd(new_message)) {
+            println!("{:?}", err);
+        }
     }
     fn message_delete(&self, ctx: Context, channel_id: ChannelId, message_id: MessageId) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
-        sender
-            .0
-            .send(BackendMsg::MessageRm(channel_id, message_id))
-            .expect("Failed to send backend message");
+        if let Err(err) = sender.0.send(BackendMsg::MessageRm(channel_id, message_id)) {
+            println!("{:?}", err);
+        }
     }
     fn message_delete_bulk(
         &self,
@@ -374,10 +319,8 @@ impl EventHandler for Handler {
         channel_id: ChannelId,
         deleted_messages: Vec<MessageId>,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -391,10 +334,8 @@ impl EventHandler for Handler {
         new: Option<Message>,
         event: MessageUpdateEvent,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -402,10 +343,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn reaction_add(&self, ctx: Context, reaction: Reaction) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -413,10 +352,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn reaction_remove(&self, ctx: Context, reaction: Reaction) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -424,10 +361,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn reaction_remove_all(&self, ctx: Context, channel_id: ChannelId, message_id: MessageId) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -435,10 +370,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn presence_replace(&self, ctx: Context, presences: Vec<Presence>) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -446,10 +379,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn presence_update(&self, ctx: Context, data: PresenceUpdateEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -457,10 +388,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn ready(&self, ctx: Context, data: Ready) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -468,10 +397,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn resume(&self, ctx: Context, data: ResumedEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -479,10 +406,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn shard_stage_update(&self, ctx: Context, data: ShardStageUpdateEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -490,10 +415,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn typing_start(&self, ctx: Context, data: TypingStartEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -501,10 +424,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn user_update(&self, ctx: Context, old: CurrentUser, new: CurrentUser) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -512,10 +433,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn voice_server_update(&self, ctx: Context, data: VoiceServerUpdateEvent) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -529,10 +448,8 @@ impl EventHandler for Handler {
         old: Option<VoiceState>,
         new: VoiceState,
     ) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -540,10 +457,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn webhook_update(&self, ctx: Context, guild_id: GuildId, channel_id: ChannelId) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -551,10 +466,8 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
     fn unknown(&self, ctx: Context, name: String, raw: Value) {
-        let sender = {
-            let context = ctx.data.read();
-            context.get::<SenderKey>().expect("Expected Sender").clone()
-        };
+        let context = ctx.data.read();
+        let sender = context.get::<SenderKey>().expect("Expected Sender");
 
         sender
             .0
@@ -626,7 +539,6 @@ pub struct Discord {
     http: Arc<Http>,
     shard_manager: Arc<Mutex<ShardManager>>,
     voice_manager: Arc<Mutex<ClientVoiceManager>>,
-    sender: Arc<Sender<BackendMsg>>,
 }
 
 impl Discord {
@@ -639,7 +551,6 @@ impl Discord {
             http: Arc::clone(&client.cache_and_http.http),
             shard_manager: Arc::clone(&client.shard_manager),
             voice_manager: Arc::clone(&client.voice_manager),
-            sender: Arc::new(sender.clone()),
         };
 
         {
@@ -688,3 +599,62 @@ impl Discord {
         }
     }
 }
+
+pub struct Cache {
+    users: DashMap<u64, UserData>,
+    guilds: DashMap<u64, GuildData>,
+    dms: DashMap<u64, ChannelData>,
+}
+
+pub struct UserData {
+    name: String,
+    discriminator: u16,
+    avatar: Option<File>,
+    bot: bool,
+}
+
+pub struct GuildData {
+    name: String,
+    splash: Option<File>,
+    banner: Option<File>,
+    owner_id: u64,
+    icon: Option<File>,
+    members: DashMap<u64, MemberData>,
+    roles: DashMap<u64, RoleData>,
+    channels: DashMap<u64, ChannelData>,
+}
+
+pub struct ChannelData {
+    name: String,
+    kind: ChannelKind,
+    position: i64,
+    topic: Option<String>,
+    nsfw: bool,
+    slow_mode_rate: Option<u64>,
+    user_limit: Option<u64>,
+}
+
+pub enum ChannelKind {
+    Text,
+    Private,
+    Voice,
+    Group,
+    Category,
+    News,
+    Store,
+}
+
+pub struct RoleData {
+    color: (u8, u8, u8),
+    hoist: bool,
+    name: String,
+    position: i64,
+}
+
+pub struct MemberData {
+    user_id: u64,
+    nickname: Option<String>,
+    roles: Vec<u64>,
+}
+
+pub struct File;

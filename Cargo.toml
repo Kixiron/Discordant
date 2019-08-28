@@ -1,10 +1,45 @@
 [package]
 name = "discordant"
 version = "0.1.0"
-authors = ["Kixiron <contact.kixiron@gmail.com>"]
+authors = ["Kixiron <contact.kixiron@gmail.com>", "Nicolas <abramlujan@gmail.com>"]
+
 edition = "2018"
 
 [dependencies]
-serenity = { git = "https://github.com/Kixiron/serenity" }
 dotenv = "0.14.1"
 serde_json = "1.0.40"
+dashmap = "1.0.3"
+
+[dependencies.futures-preview]
+version = "=0.3.0-alpha.17"
+features = [
+    "async-await",
+    "nightly",
+    "compat"
+]
+
+[dependencies.tokio]
+version = "0.2.0-alpha.1"
+features = [
+    "sync",
+]
+
+[dependencies.reqwest]
+version = "0.9"
+default-features = false
+features = ["rustls-tls"]
+
+[dependencies.serenity]
+default-features = false
+features = [
+    "builder",
+    "client",
+    "gateway",
+    "http",
+    "model",
+    "cache",
+    "utils",
+    "rustls_backend",
+    "voice"
+]
+path = "../serenity"

@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 serenity = { git = "https://github.com/Kixiron/serenity" }
+dotenv = "0.14.1"
+serde_json = "1.0.40"

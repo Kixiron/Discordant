@@ -1,0 +1,48 @@
+[package]
+name = "discordant"
+version = "0.1.0"
+authors = ["Kixiron <contact.kixiron@gmail.com>", "Nicolas <abramlujan@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dotenv = "0.14.1"
+serde_json = "1.0.40"
+dashmap = "1.0.4"
+
+[dependencies.futures-preview]
+version = "=0.3.0-alpha.18"
+features = [
+    "async-await",
+    "nightly",
+    "compat"
+]
+
+# [dependencies.hyper-tls]
+# git = "https://github.com/hyperium/hyper-tls"
+# rev = "36ef8bfd529d5586ff3b4c36a70141e74c1277cc"
+
+[dependencies.tokio]
+version = "0.2.0-alpha.2"
+features = [
+    "sync",
+]
+
+[dependencies.hyper]
+git = "https://github.com/hyperium/hyper"
+features = ["runtime"]
+rev = "a1609fbb332fccffbeb85d16f1cc0bf98c6ede21"
+
+[dependencies.serenity]
+default-features = false
+features = [
+    "builder",
+    "client",
+    "gateway",
+    "http",
+    "model",
+    "cache",
+    "utils",
+    "rustls_backend",
+    "voice"
+]
+path = "../serenity"

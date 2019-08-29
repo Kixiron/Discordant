@@ -1,15 +1,7 @@
-use dashmap::DashMap;
-use futures::channel::mpsc::{self, Receiver, Sender};
+use super::{BackendMsg, SenderKey};
 use serde_json::Value;
 use serenity::{
-    client::{
-        bridge::{
-            gateway::{event::ShardStageUpdateEvent, ShardManager},
-            voice::ClientVoiceManager,
-        },
-        Client, Context, EventHandler,
-    },
-    http::raw::Http,
+    client::{bridge::gateway::event::ShardStageUpdateEvent, Context, EventHandler},
     model::{
         channel::{Channel, ChannelCategory, GuildChannel, Message, PrivateChannel, Reaction},
         event::{
@@ -22,14 +14,11 @@ use serenity::{
         user::{CurrentUser, User},
         voice::VoiceState,
     },
-    prelude::{Mutex, RwLock, TypeMapKey},
+    prelude::RwLock,
 };
-use std::{collections::HashMap, sync::Arc, thread};
+use std::{collections::HashMap, sync::Arc};
 
-unsafe impl Send for BackendMsg {}
-unsafe impl Sync for BackendMsg {}
-
-struct Handler;
+pub struct Handler;
 
 impl EventHandler for Handler {
     fn cache_ready(&self, ctx: Context, guilds: Vec<GuildId>) {
@@ -561,186 +550,3 @@ impl EventHandler for Handler {
             .expect("Failed to send backend message");
     }
 }
-
-#[derive(Clone, Debug)]
-pub enum BackendMsg {
-    CacheReady(Vec<GuildId>),
-    ChannelCreate(Arc<RwLock<GuildChannel>>),
-    CategoryCreate(Arc<RwLock<ChannelCategory>>),
-    CategoryDelete(Arc<RwLock<ChannelCategory>>),
-    PrivateChannelCreate(Arc<RwLock<PrivateChannel>>),
-    ChannelDelete(Arc<RwLock<GuildChannel>>),
-    ChannelPinsUpdate(ChannelPinsUpdateEvent),
-    ChannelRecipientAdd(ChannelId, User),
-    ChannelRecipientRm(ChannelId, User),
-    ChannelUpdate(Option<Channel>, Channel),
-    GuildBanAdd(GuildId, User),
-    GuildBanRm(GuildId, User),
-    GuildCreate(Guild, bool),
-    GuildDel(PartialGuild, Option<Arc<RwLock<Guild>>>),
-    GuildEmojiUpdate(GuildId, HashMap<EmojiId, Emoji>),
-    GuildIntegrationsUpdate(GuildId),
-    GuildMemberAdd(GuildId, Member),
-    GuildMemberRm(GuildId, User, Option<Member>),
-    GuildMemberUpdate(Option<Member>, Member),
-    GuildMembersOffline(GuildId, HashMap<UserId, Member>),
-    GuildRoleAdd(GuildId, Role),
-    GuildRoleRm(GuildId, RoleId, Option<Role>),
-    GuildRoleUpdate(GuildId, Option<Role>, Role),
-    GuildUnavailable(GuildId),
-    GuildUpdate(Option<Arc<RwLock<Guild>>>, PartialGuild),
-    MessageAdd(Message),
-    MessageRm(ChannelId, MessageId),
-    MessageRmBulk(ChannelId, Vec<MessageId>),
-    MessageUpdate(Option<Message>, Option<Message>, MessageUpdateEvent),
-    ReactionAdd(Reaction),
-    ReactionRm(Reaction),
-    ReactionRmAll(ChannelId, MessageId),
-    PresenceReplace(Vec<Presence>),
-    PresenceUpdate(PresenceUpdateEvent),
-    Ready(Ready),
-    Resume(ResumedEvent),
-    ShardStageUpdate(ShardStageUpdateEvent),
-    TypingStart(TypingStartEvent),
-    UserUpdate(CurrentUser, CurrentUser),
-    VoiceServerUpdate(VoiceServerUpdateEvent),
-    VoiceStateUpdate(Option<GuildId>, Option<VoiceState>, VoiceState),
-    WebhookUpdate(GuildId, ChannelId),
-    Unknown(String, Value),
-}
-
-#[derive(Clone, Debug)]
-#[repr(transparent)]
-struct SendWrap(Sender<BackendMsg>);
-
-unsafe impl Send for SendWrap {}
-unsafe impl Sync for SendWrap {}
-
-struct SenderKey;
-impl TypeMapKey for SenderKey {
-    type Value = Arc<SendWrap>;
-}
-
-pub struct Discord {
-    http: Arc<Http>,
-    shard_manager: Arc<Mutex<ShardManager>>,
-    voice_manager: Arc<Mutex<ClientVoiceManager>>,
-}
-
-impl Discord {
-    #[inline]
-    pub fn spawn(token: impl AsRef<str>) -> (Self, Receiver<BackendMsg>) {
-        let mut client = Client::new(token, Handler).expect("Err creating client");
-
-        let (sender, receiver) = mpsc::channel::<BackendMsg>(100);
-        let discord = Self {
-            http: Arc::clone(&client.cache_and_http.http),
-            shard_manager: Arc::clone(&client.shard_manager),
-            voice_manager: Arc::clone(&client.voice_manager),
-        };
-
-        {
-            let mut data = client.data.write();
-
-            data.insert::<SenderKey>(Arc::new(SendWrap(sender)));
-        }
-
-        thread::Builder::new()
-            .name("Backend".to_string())
-            .spawn(move || {
-                if let Err(err) = client.start() {
-                    println!("Client error: {:?}", err);
-                }
-            })
-            .expect("Failed to spawn Serenity thread");
-
-        (discord, receiver)
-    }
-
-    #[inline]
-    pub fn add_group_member(&self, group_id: u64, user_id: u64) -> Result<(), serenity::Error> {
-        (*self.http).add_group_recipient(group_id, user_id)
-    }
-
-    #[inline]
-    pub fn add_role(
-        &self,
-        guild_id: u64,
-        user_id: u64,
-        role_id: u64,
-    ) -> Result<(), serenity::Error> {
-        (*self.http).add_member_role(guild_id, user_id, role_id)
-    }
-
-    #[inline]
-    pub fn send_message(&self, channel_id: u64, content: &str) -> Result<Message, serenity::Error> {
-        (*self.http).send_message(channel_id, &serde_json::json!({ "content": content }))
-    }
-
-    #[inline]
-    pub fn restart(&mut self) {
-        let mut manager = self.shard_manager.lock();
-        for shard in &manager.shards_instantiated() {
-            manager.restart(*shard);
-        }
-    }
-}
-
-pub struct Cache {
-    users: DashMap<u64, UserData>,
-    guilds: DashMap<u64, GuildData>,
-    dms: DashMap<u64, ChannelData>,
-}
-
-pub struct UserData {
-    name: String,
-    discriminator: u16,
-    avatar: Option<File>,
-    bot: bool,
-}
-
-pub struct GuildData {
-    name: String,
-    splash: Option<File>,
-    banner: Option<File>,
-    owner_id: u64,
-    icon: Option<File>,
-    members: DashMap<u64, MemberData>,
-    roles: DashMap<u64, RoleData>,
-    channels: DashMap<u64, ChannelData>,
-}
-
-pub struct ChannelData {
-    name: String,
-    kind: ChannelKind,
-    position: i64,
-    topic: Option<String>,
-    nsfw: bool,
-    slow_mode_rate: Option<u64>,
-    user_limit: Option<u64>,
-}
-
-pub enum ChannelKind {
-    Text,
-    Private,
-    Voice,
-    Group,
-    Category,
-    News,
-    Store,
-}
-
-pub struct RoleData {
-    color: (u8, u8, u8),
-    hoist: bool,
-    name: String,
-    position: i64,
-}
-
-pub struct MemberData {
-    user_id: u64,
-    nickname: Option<String>,
-    roles: Vec<u64>,
-}
-
-pub struct File;

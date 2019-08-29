@@ -17,6 +17,10 @@ features = [
     "compat"
 ]
 
+# [dependencies.hyper-tls]
+# git = "https://github.com/hyperium/hyper-tls"
+# rev = "36ef8bfd529d5586ff3b4c36a70141e74c1277cc"
+
 [dependencies.tokio]
 version = "0.2.0-alpha.2"
 features = [

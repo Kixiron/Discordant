@@ -28,6 +28,7 @@ fn main() {
                     BackendMsg::MessageAdd(msg) => {
                         println!("{:?}", msg);
                         for attachment in msg.attachments {
+                            println!("Sending {} to be downloaded", attachment.proxy_url);
                             url_sender
                                 .send(attachment.url)
                                 .await
@@ -64,43 +65,40 @@ fn backend() -> (
 }
 
 async fn async_backend(mut url_recv: Receiver<String>, file_sender: Sender<Vec<u8>>) {
-    use futures::compat::{Future01CompatExt, Stream01CompatExt};
-    use futures::stream::StreamExt;
-    use hyper::Uri;
+    use futures::{stream::{TryStreamExt, StreamExt}, compat::{Future01CompatExt, Stream01CompatExt}, sink::SinkExt};
     use std::str::FromStr;
+    use hyper::{client::Client, Uri};
 
-    tokio::spawn(async move {
-        use hyper::client::Client;
+    // let https = hyper_tls::HttpsConnector::new(4).unwrap();
+    // let client = Client::builder()
+    //     .build::<_, hyper::Body>(https);
+    let client = Client::new();
 
-        let client = Client::new();
+    while let Some(url) = url_recv.next().await {
+        println!("Received {} to be downloaded", url);
+        let client = client.clone();
+        let url = Uri::from_str(&url.replace("https://", "http://")).expect("Failed to parse URL");
 
-        use futures::sink::SinkExt;
-        use futures::stream::TryStreamExt;
+        let mut file_sender = file_sender.clone();
 
-        while let Some(url) = url_recv.next().await {
-            let client = client.clone();
-            let url = Uri::from_str(&url).expect("Failed to parse URL");
-
-            let mut file_sender = file_sender.clone();
-
-            tokio::spawn(async move {
-                let file = match client.get(url).compat().await {
-                    Ok(file) => file,
-                    Err(err) => {
-                        println!("Http Error: {:?}", err);
-                        return;
-                    }
+        tokio::spawn(async move {
+            let file = match client.get(url).compat().await {
+                Ok(file) => file,
+                Err(err) => {
+                    println!("Http Error: {:?}", err);
+                    return;
                 }
-                .into_body()
-                .compat()
-                .try_concat()
-                .await;
+            }
+            .into_body()
+            .compat()
+            .try_concat()
+            .await;
 
-                file_sender
-                    .send(file.unwrap().to_vec())
-                    .await
-                    .expect("Failed to send file");
-            });
-        }
-    });
+            println!("Processed file: {:?}", file);
+            file_sender
+                .send(file.unwrap().to_vec())
+                .await
+                .expect("Failed to send file");
+        });
+    }
 }

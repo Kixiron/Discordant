@@ -391,9 +391,25 @@ impl EventHandler for Handler {
         let context = ctx.data.read();
         let sender = context.get::<SenderKey>().expect("Expected Sender");
 
+        let user = ctx.http.get_current_user().unwrap();
+        let guilds = ctx
+            .http
+            .get_guilds(&serenity::http::GuildPagination::After(GuildId(0)), 100)
+            .unwrap();
+        let http = &ctx.http;
+        let guilds = guilds
+            .into_iter()
+            .map(|g| g.id.to_partial_guild(http).unwrap())
+            .map(|pg| {
+                let channels = pg.channels(http).unwrap();
+                let members = pg.members(http, Some(1000), None).unwrap();
+                (pg, members, channels)
+            })
+            .collect::<Vec<_>>();
+
         sender
             .0
-            .send(BackendMsg::Ready(data))
+            .send(BackendMsg::Ready(data, crate::ui::InitializationState { guilds, user }))
             .expect("Failed to send backend message");
     }
     fn resume(&self, ctx: Context, data: ResumedEvent) {
@@ -512,7 +528,7 @@ pub enum BackendMsg {
     ReactionRmAll(ChannelId, MessageId),
     PresenceReplace(Vec<Presence>),
     PresenceUpdate(PresenceUpdateEvent),
-    Ready(Ready),
+    Ready(Ready, crate::ui::InitializationState),
     Resume(ResumedEvent),
     ShardStageUpdate(ShardStageUpdateEvent),
     TypingStart(TypingStartEvent),

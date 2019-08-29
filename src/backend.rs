@@ -1,4 +1,5 @@
 use dashmap::DashMap;
+use futures::channel::mpsc::{self, Receiver, Sender};
 use serde_json::Value;
 use serenity::{
     client::{
@@ -23,14 +24,7 @@ use serenity::{
     },
     prelude::{Mutex, RwLock, TypeMapKey},
 };
-use std::{
-    collections::HashMap,
-    sync::{
-        mpsc::{self, Receiver, Sender},
-        Arc,
-    },
-    thread,
-};
+use std::{collections::HashMap, sync::Arc, thread};
 
 unsafe impl Send for BackendMsg {}
 unsafe impl Sync for BackendMsg {}
@@ -39,120 +33,146 @@ struct Handler;
 
 impl EventHandler for Handler {
     fn cache_ready(&self, ctx: Context, guilds: Vec<GuildId>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::CacheReady(guilds))
+            .try_send(BackendMsg::CacheReady(guilds))
             .expect("Failed to send backend message");
     }
     fn channel_create(&self, ctx: Context, channel: Arc<RwLock<GuildChannel>>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelCreate(channel))
+            .try_send(BackendMsg::ChannelCreate(channel))
             .expect("Failed to send backend message");
     }
     fn category_create(&self, ctx: Context, category: Arc<RwLock<ChannelCategory>>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::CategoryCreate(category))
+            .try_send(BackendMsg::CategoryCreate(category))
             .expect("Failed to send backend message");
     }
     fn category_delete(&self, ctx: Context, category: Arc<RwLock<ChannelCategory>>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::CategoryDelete(category))
+            .try_send(BackendMsg::CategoryDelete(category))
             .expect("Failed to send backend message");
     }
     fn private_channel_create(&self, ctx: Context, channel: Arc<RwLock<PrivateChannel>>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::PrivateChannelCreate(channel))
+            .try_send(BackendMsg::PrivateChannelCreate(channel))
             .expect("Failed to send backend message");
     }
     fn channel_delete(&self, ctx: Context, channel: Arc<RwLock<GuildChannel>>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelDelete(channel))
+            .try_send(BackendMsg::ChannelDelete(channel))
             .expect("Failed to send backend message");
     }
     fn channel_pins_update(&self, ctx: Context, pin: ChannelPinsUpdateEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelPinsUpdate(pin))
+            .try_send(BackendMsg::ChannelPinsUpdate(pin))
             .expect("Failed to send backend message");
     }
     fn channel_recipient_addition(&self, ctx: Context, group_id: ChannelId, user: User) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelRecipientAdd(group_id, user))
+            .try_send(BackendMsg::ChannelRecipientAdd(group_id, user))
             .expect("Failed to send backend message");
     }
     fn channel_recipient_removal(&self, ctx: Context, group_id: ChannelId, user: User) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelRecipientRm(group_id, user))
+            .try_send(BackendMsg::ChannelRecipientRm(group_id, user))
             .expect("Failed to send backend message");
     }
     fn channel_update(&self, ctx: Context, old: Option<Channel>, new: Channel) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ChannelUpdate(old, new))
+            .try_send(BackendMsg::ChannelUpdate(old, new))
             .expect("Failed to send backend message");
     }
     fn guild_ban_addition(&self, ctx: Context, guild_id: GuildId, banned_user: User) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildBanAdd(guild_id, banned_user))
+            .try_send(BackendMsg::GuildBanAdd(guild_id, banned_user))
             .expect("Failed to send backend message");
     }
     fn guild_ban_removal(&self, ctx: Context, guild_id: GuildId, unbanned_user: User) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildBanRm(guild_id, unbanned_user))
+            .try_send(BackendMsg::GuildBanRm(guild_id, unbanned_user))
             .expect("Failed to send backend message");
     }
     fn guild_create(&self, ctx: Context, guild: Guild, is_new: bool) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildCreate(guild, is_new))
+            .try_send(BackendMsg::GuildCreate(guild, is_new))
             .expect("Failed to send backend message");
     }
     fn guild_delete(
@@ -161,12 +181,14 @@ impl EventHandler for Handler {
         incomplete: PartialGuild,
         full: Option<Arc<RwLock<Guild>>>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildDel(incomplete, full))
+            .try_send(BackendMsg::GuildDel(incomplete, full))
             .expect("Failed to send backend message");
     }
     fn guild_emojis_update(
@@ -175,30 +197,36 @@ impl EventHandler for Handler {
         guild_id: GuildId,
         current_state: HashMap<EmojiId, Emoji>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildEmojiUpdate(guild_id, current_state))
+            .try_send(BackendMsg::GuildEmojiUpdate(guild_id, current_state))
             .expect("Failed to send backend message");
     }
     fn guild_integrations_update(&self, ctx: Context, guild_id: GuildId) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildIntegrationsUpdate(guild_id))
+            .try_send(BackendMsg::GuildIntegrationsUpdate(guild_id))
             .expect("Failed to send backend message");
     }
     fn guild_member_addition(&self, ctx: Context, guild_id: GuildId, new_member: Member) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildMemberAdd(guild_id, new_member))
+            .try_send(BackendMsg::GuildMemberAdd(guild_id, new_member))
             .expect("Failed to send backend message");
     }
     fn guild_member_removal(
@@ -208,21 +236,25 @@ impl EventHandler for Handler {
         user: User,
         member_data: Option<Member>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildMemberRm(guild_id, user, member_data))
+            .try_send(BackendMsg::GuildMemberRm(guild_id, user, member_data))
             .expect("Failed to send backend message");
     }
     fn guild_member_update(&self, ctx: Context, old: Option<Member>, new: Member) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildMemberUpdate(old, new))
+            .try_send(BackendMsg::GuildMemberUpdate(old, new))
             .expect("Failed to send backend message");
     }
 
@@ -232,21 +264,25 @@ impl EventHandler for Handler {
         guild_id: GuildId,
         offline_members: HashMap<UserId, Member>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildMembersOffline(guild_id, offline_members))
+            .try_send(BackendMsg::GuildMembersOffline(guild_id, offline_members))
             .expect("Failed to send backend message");
     }
     fn guild_role_create(&self, ctx: Context, guild_id: GuildId, new: Role) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildRoleAdd(guild_id, new))
+            .try_send(BackendMsg::GuildRoleAdd(guild_id, new))
             .expect("Failed to send backend message");
     }
     fn guild_role_delete(
@@ -256,12 +292,14 @@ impl EventHandler for Handler {
         role_id: RoleId,
         role_data: Option<Role>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildRoleRm(guild_id, role_id, role_data))
+            .try_send(BackendMsg::GuildRoleRm(guild_id, role_id, role_data))
             .expect("Failed to send backend message");
     }
     fn guild_role_update(
@@ -271,47 +309,59 @@ impl EventHandler for Handler {
         old_data: Option<Role>,
         new: Role,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildRoleUpdate(guild_id, old_data, new))
+            .try_send(BackendMsg::GuildRoleUpdate(guild_id, old_data, new))
             .expect("Failed to send backend message");
     }
     fn guild_unavailable(&self, ctx: Context, guild_id: GuildId) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildUnavailable(guild_id))
+            .try_send(BackendMsg::GuildUnavailable(guild_id))
             .expect("Failed to send backend message");
     }
     fn guild_update(&self, ctx: Context, old_data: Option<Arc<RwLock<Guild>>>, new: PartialGuild) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::GuildUpdate(old_data, new))
+            .try_send(BackendMsg::GuildUpdate(old_data, new))
             .expect("Failed to send backend message");
     }
     fn message(&self, ctx: Context, new_message: Message) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        if let Err(err) = sender.0.send(BackendMsg::MessageAdd(new_message)) {
-            println!("{:?}", err);
-        }
+        Arc::make_mut(&mut sender)
+            .0
+            .try_send(BackendMsg::MessageAdd(new_message))
+            .expect("Failed to send backend message");
     }
     fn message_delete(&self, ctx: Context, channel_id: ChannelId, message_id: MessageId) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        if let Err(err) = sender.0.send(BackendMsg::MessageRm(channel_id, message_id)) {
-            println!("{:?}", err);
-        }
+        Arc::make_mut(&mut sender)
+            .0
+            .try_send(BackendMsg::MessageRm(channel_id, message_id))
+            .expect("Failed to send backend message");
     }
     fn message_delete_bulk(
         &self,
@@ -319,12 +369,14 @@ impl EventHandler for Handler {
         channel_id: ChannelId,
         deleted_messages: Vec<MessageId>,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::MessageRmBulk(channel_id, deleted_messages))
+            .try_send(BackendMsg::MessageRmBulk(channel_id, deleted_messages))
             .expect("Failed to send backend message");
     }
     fn message_update(
@@ -334,111 +386,139 @@ impl EventHandler for Handler {
         new: Option<Message>,
         event: MessageUpdateEvent,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::MessageUpdate(old, new, event))
+            .try_send(BackendMsg::MessageUpdate(old, new, event))
             .expect("Failed to send backend message");
     }
     fn reaction_add(&self, ctx: Context, reaction: Reaction) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ReactionAdd(reaction))
+            .try_send(BackendMsg::ReactionAdd(reaction))
             .expect("Failed to send backend message");
     }
     fn reaction_remove(&self, ctx: Context, reaction: Reaction) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ReactionRm(reaction))
+            .try_send(BackendMsg::ReactionRm(reaction))
             .expect("Failed to send backend message");
     }
     fn reaction_remove_all(&self, ctx: Context, channel_id: ChannelId, message_id: MessageId) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ReactionRmAll(channel_id, message_id))
+            .try_send(BackendMsg::ReactionRmAll(channel_id, message_id))
             .expect("Failed to send backend message");
     }
     fn presence_replace(&self, ctx: Context, presences: Vec<Presence>) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::PresenceReplace(presences))
+            .try_send(BackendMsg::PresenceReplace(presences))
             .expect("Failed to send backend message");
     }
     fn presence_update(&self, ctx: Context, data: PresenceUpdateEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::PresenceUpdate(data))
+            .try_send(BackendMsg::PresenceUpdate(data))
             .expect("Failed to send backend message");
     }
     fn ready(&self, ctx: Context, data: Ready) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::Ready(data))
+            .try_send(BackendMsg::Ready(data))
             .expect("Failed to send backend message");
     }
     fn resume(&self, ctx: Context, data: ResumedEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::Resume(data))
+            .try_send(BackendMsg::Resume(data))
             .expect("Failed to send backend message");
     }
     fn shard_stage_update(&self, ctx: Context, data: ShardStageUpdateEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::ShardStageUpdate(data))
+            .try_send(BackendMsg::ShardStageUpdate(data))
             .expect("Failed to send backend message");
     }
     fn typing_start(&self, ctx: Context, data: TypingStartEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::TypingStart(data))
+            .try_send(BackendMsg::TypingStart(data))
             .expect("Failed to send backend message");
     }
     fn user_update(&self, ctx: Context, old: CurrentUser, new: CurrentUser) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context
+                .get::<SenderKey>()
+                .expect("Expected Sender")
+                .clone()
+                .clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::UserUpdate(old, new))
+            .try_send(BackendMsg::UserUpdate(old, new))
             .expect("Failed to send backend message");
     }
     fn voice_server_update(&self, ctx: Context, data: VoiceServerUpdateEvent) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::VoiceServerUpdate(data))
+            .try_send(BackendMsg::VoiceServerUpdate(data))
             .expect("Failed to send backend message");
     }
     fn voice_state_update(
@@ -448,30 +528,36 @@ impl EventHandler for Handler {
         old: Option<VoiceState>,
         new: VoiceState,
     ) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::VoiceStateUpdate(guild_id, old, new))
+            .try_send(BackendMsg::VoiceStateUpdate(guild_id, old, new))
             .expect("Failed to send backend message");
     }
     fn webhook_update(&self, ctx: Context, guild_id: GuildId, channel_id: ChannelId) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::WebhookUpdate(guild_id, channel_id))
+            .try_send(BackendMsg::WebhookUpdate(guild_id, channel_id))
             .expect("Failed to send backend message");
     }
     fn unknown(&self, ctx: Context, name: String, raw: Value) {
-        let context = ctx.data.read();
-        let sender = context.get::<SenderKey>().expect("Expected Sender");
+        let mut sender = {
+            let context = ctx.data.read();
+            context.get::<SenderKey>().expect("Expected Sender").clone()
+        };
 
-        sender
+        Arc::make_mut(&mut sender)
             .0
-            .send(BackendMsg::Unknown(name, raw))
+            .try_send(BackendMsg::Unknown(name, raw))
             .expect("Failed to send backend message");
     }
 }
@@ -546,7 +632,7 @@ impl Discord {
     pub fn spawn(token: impl AsRef<str>) -> (Self, Receiver<BackendMsg>) {
         let mut client = Client::new(token, Handler).expect("Err creating client");
 
-        let (sender, receiver) = mpsc::channel::<BackendMsg>();
+        let (sender, receiver) = mpsc::channel::<BackendMsg>(100);
         let discord = Self {
             http: Arc::clone(&client.cache_and_http.http),
             shard_manager: Arc::clone(&client.shard_manager),

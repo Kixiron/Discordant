@@ -91,15 +91,14 @@ pub use crate::client::Client;
 
 #[cfg(feature = "cache")]
 use crate::cache::Cache;
-#[cfg(feature = "cache")]
-use parking_lot::RwLock;
-#[cfg(feature = "cache")]
-use std::time::Duration;
-#[cfg(any(feature = "client", feature = "http"))]
-use std::sync::Arc;
 #[cfg(all(feature = "client", feature = "http"))]
 use crate::http::Http;
-
+#[cfg(feature = "cache")]
+use parking_lot::RwLock;
+#[cfg(any(feature = "client", feature = "http"))]
+use std::sync::Arc;
+#[cfg(feature = "cache")]
+use std::time::Duration;
 
 #[cfg(feature = "client")]
 #[derive(Default)]

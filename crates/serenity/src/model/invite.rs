@@ -1,22 +1,22 @@
 //! Models for server and channel invites.
 
+use super::prelude::*;
 #[cfg(feature = "http")]
 use crate::http::CacheHttp;
 use chrono::{DateTime, FixedOffset};
-use super::prelude::*;
 
+#[cfg(all(feature = "cache", feature = "model"))]
+use super::{utils as model_utils, Permissions};
 #[cfg(feature = "model")]
 use crate::builder::CreateInvite;
-#[cfg(feature = "model")]
-use crate::internal::prelude::*;
-#[cfg(all(feature = "cache", feature = "model"))]
-use super::{Permissions, utils as model_utils};
-#[cfg(feature = "model")]
-use crate::utils;
 #[cfg(feature = "cache")]
 use crate::cache::CacheRwLock;
 #[cfg(feature = "http")]
 use crate::http::Http;
+#[cfg(feature = "model")]
+use crate::internal::prelude::*;
+#[cfg(feature = "model")]
+use crate::utils;
 
 /// Information about an invite code.
 ///
@@ -80,13 +80,18 @@ impl Invite {
     /// [permission]: ../permissions/index.html
     #[cfg(feature = "client")]
     pub fn create<C, F>(cache_http: impl CacheHttp, channel_id: C, f: F) -> Result<RichInvite>
-        where C: Into<ChannelId>, F: FnOnce(CreateInvite) -> CreateInvite {
+    where
+        C: Into<ChannelId>,
+        F: FnOnce(CreateInvite) -> CreateInvite,
+    {
         Self::_create(cache_http, channel_id.into(), f)
     }
 
     #[cfg(feature = "client")]
     fn _create<F>(cache_http: impl CacheHttp, channel_id: ChannelId, f: F) -> Result<RichInvite>
-        where F: FnOnce(CreateInvite) -> CreateInvite {
+    where
+        F: FnOnce(CreateInvite) -> CreateInvite,
+    {
         #[cfg(feature = "cache")]
         {
             if let Some(cache) = cache_http.cache() {
@@ -181,7 +186,9 @@ impl Invite {
     /// assert_eq!(invite.url(), "https://discord.gg/WxZumR");
     /// # }
     /// ```
-    pub fn url(&self) -> String { format!("https://discord.gg/{}", self.code) }
+    pub fn url(&self) -> String {
+        format!("https://discord.gg/{}", self.code)
+    }
 }
 
 /// A minimal information about the channel an invite points to.
@@ -189,7 +196,8 @@ impl Invite {
 pub struct InviteChannel {
     pub id: ChannelId,
     pub name: String,
-    #[serde(rename = "type")] pub kind: ChannelType,
+    #[serde(rename = "type")]
+    pub kind: ChannelType,
     #[serde(skip)]
     pub(crate) _nonexhaustive: (),
 }
@@ -221,7 +229,9 @@ impl InviteGuild {
     /// [`utils::shard_id`]: ../../utils/fn.shard_id.html
     #[cfg(all(feature = "cache", feature = "utils"))]
     #[inline]
-    pub fn shard_id(&self, cache: impl AsRef<CacheRwLock>) -> u64 { self.id.shard_id(&cache) }
+    pub fn shard_id(&self, cache: impl AsRef<CacheRwLock>) -> u64 {
+        self.id.shard_id(&cache)
+    }
 
     /// Returns the Id of the shard associated with the guild.
     ///
@@ -245,7 +255,9 @@ impl InviteGuild {
     /// ```
     #[cfg(all(feature = "utils", not(feature = "cache")))]
     #[inline]
-    pub fn shard_id(&self, shard_count: u64) -> u64 { self.id.shard_id(shard_count) }
+    pub fn shard_id(&self, shard_count: u64) -> u64 {
+        self.id.shard_id(shard_count)
+    }
 }
 
 /// Detailed information about an invite.
@@ -379,5 +391,7 @@ impl RichInvite {
     /// assert_eq!(invite.url(), "https://discord.gg/WxZumR");
     /// # }
     /// ```
-    pub fn url(&self) -> String { format!("https://discord.gg/{}", self.code) }
+    pub fn url(&self) -> String {
+        format!("https://discord.gg/{}", self.code)
+    }
 }

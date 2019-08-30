@@ -40,23 +40,13 @@
 //! [Taken from]: https://discordapp.com/developers/docs/topics/rate-limits#rate-limits
 pub use super::routing::Route;
 
-use chrono::{DateTime, Utc};
-use reqwest::{
-    Response,
-    header::HeaderMap,
-    StatusCode,
-};
-use crate::internal::prelude::*;
-use parking_lot::Mutex;
-use std::{
-    sync::Arc,
-    time::Duration,
-    str,
-    thread,
-    i64,
-};
 use super::{Http, HttpError, Request};
+use crate::internal::prelude::*;
+use chrono::{DateTime, Utc};
 use log::debug;
+use parking_lot::Mutex;
+use reqwest::{header::HeaderMap, Response, StatusCode};
+use std::{i64, str, sync::Arc, thread, time::Duration};
 
 /// Refer to [`offset`].
 ///
@@ -87,16 +77,13 @@ pub(super) fn perform(http: &Http, req: Request<'_>) -> Result<Response> {
         // - get the global rate;
         // - sleep if there is 0 remaining
         // - then, perform the request
-        let bucket = Arc::clone(http.routes
-            .lock()
-            .entry(route)
-            .or_insert_with(|| {
-                Arc::new(Mutex::new(RateLimit {
-                    limit: i64::MAX,
-                    remaining: i64::MAX,
-                    reset: i64::MAX,
-                }))
-            }));
+        let bucket = Arc::clone(http.routes.lock().entry(route).or_insert_with(|| {
+            Arc::new(Mutex::new(RateLimit {
+                limit: i64::MAX,
+                remaining: i64::MAX,
+                reset: i64::MAX,
+            }))
+        }));
 
         let mut lock = bucket.lock();
         lock.pre_hook(&route);
@@ -111,7 +98,12 @@ pub(super) fn perform(http: &Http, req: Request<'_>) -> Result<Response> {
         // This should probably only be a one-time check, although we may want
         // to choose to check this often in the future.
         if unsafe { OFFSET }.is_none() {
-            calculate_offset(&response.headers().get("date").and_then(|d| Some(d.as_bytes())));
+            calculate_offset(
+                &response
+                    .headers()
+                    .get("date")
+                    .and_then(|d| Some(d.as_bytes())),
+            );
         }
 
         // Check if the request got ratelimited by checking for status 429,
@@ -203,10 +195,9 @@ impl RateLimit {
 
             debug!(
                 "Pre-emptive ratelimit on route {:?} for {:?}ms",
-                route,
-                delay
+                route, delay
             );
-			
+
             thread::sleep(Duration::from_millis(delay));
 
             return;
@@ -288,7 +279,6 @@ fn calculate_offset(header: &Option<&[u8]>) {
             }
         }
     }
-
 }
 
 fn parse_header(headers: &HeaderMap, header: &str) -> Result<Option<i64>> {
@@ -297,29 +287,22 @@ fn parse_header(headers: &HeaderMap, header: &str) -> Result<Option<i64>> {
         None => return Ok(None),
     };
 
-    let unicode = str::from_utf8(&header.as_bytes()).map_err(|_| {
-        Error::from(HttpError::RateLimitUtf8)
-    })?;
+    let unicode =
+        str::from_utf8(&header.as_bytes()).map_err(|_| Error::from(HttpError::RateLimitUtf8))?;
 
-    let num = unicode.parse().map_err(|_| {
-        Error::from(HttpError::RateLimitI64)
-    })?;
+    let num = unicode
+        .parse()
+        .map_err(|_| Error::from(HttpError::RateLimitI64))?;
 
     Ok(Some(num))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        error::Error,
-        http::HttpError,
-    };
-    use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-    use std::{
-        error::Error as StdError,
-        result::Result as StdResult,
-    };
     use super::parse_header;
+    use crate::{error::Error, http::HttpError};
+    use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+    use std::{error::Error as StdError, result::Result as StdResult};
 
     type Result<T> = StdResult<T, Box<dyn StdError>>;
 
@@ -361,10 +344,7 @@ mod tests {
         let headers = headers();
 
         assert_eq!(parse_header(&headers, "x-ratelimit-limit")?.unwrap(), 5);
-        assert_eq!(
-            parse_header(&headers, "x-ratelimit-remaining")?.unwrap(),
-            4,
-        );
+        assert_eq!(parse_header(&headers, "x-ratelimit-remaining")?.unwrap(), 4,);
         assert_eq!(
             parse_header(&headers, "x-ratelimit-reset")?.unwrap(),
             1_560_704_880,

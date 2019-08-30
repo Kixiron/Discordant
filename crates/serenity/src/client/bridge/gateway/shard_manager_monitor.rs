@@ -1,10 +1,7 @@
-use parking_lot::Mutex;
-use std::sync::{
-    mpsc::Receiver,
-    Arc
-};
 use super::{ShardManager, ShardManagerMessage};
 use log::debug;
+use parking_lot::Mutex;
+use std::sync::{mpsc::Receiver, Arc};
 
 /// The shard manager monitor does what it says on the tin -- it monitors the
 /// shard manager and performs actions on it as received.
@@ -42,7 +39,7 @@ impl ShardManagerMonitor {
             match value {
                 ShardManagerMessage::Restart(shard_id) => {
                     self.manager.lock().restart(shard_id);
-                },
+                }
                 ShardManagerMessage::ShardUpdate { id, latency, stage } => {
                     let manager = self.manager.lock();
                     let mut runners = manager.runners.lock();
@@ -54,12 +51,12 @@ impl ShardManagerMonitor {
                 }
                 ShardManagerMessage::Shutdown(shard_id) => {
                     self.manager.lock().shutdown(shard_id);
-                },
+                }
                 ShardManagerMessage::ShutdownAll => {
                     self.manager.lock().shutdown_all();
 
                     break;
-                },
+                }
                 ShardManagerMessage::ShutdownInitiated => break,
             }
         }

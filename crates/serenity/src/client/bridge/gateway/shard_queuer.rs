@@ -1,33 +1,26 @@
+use super::super::super::{EventHandler, RawEventHandler};
+use super::{
+    ShardId, ShardManagerMessage, ShardQueuerMessage, ShardRunner, ShardRunnerInfo,
+    ShardRunnerOptions,
+};
+use crate::gateway::ConnectionStage;
 use crate::gateway::Shard;
 use crate::internal::prelude::*;
 use crate::CacheAndHttp;
+use log::{info, warn};
 use parking_lot::Mutex;
 use parking_lot::RwLock;
 use std::{
     collections::{HashMap, VecDeque},
     sync::{
-        mpsc::{
-            Receiver,
-            RecvTimeoutError,
-            Sender},
-        Arc
+        mpsc::{Receiver, RecvTimeoutError, Sender},
+        Arc,
     },
     thread,
-    time::{Duration, Instant}
-};
-use super::super::super::{EventHandler, RawEventHandler};
-use super::{
-    ShardId,
-    ShardManagerMessage,
-    ShardQueuerMessage,
-    ShardRunner,
-    ShardRunnerInfo,
-    ShardRunnerOptions,
+    time::{Duration, Instant},
 };
 use threadpool::ThreadPool;
 use typemap::ShareMap;
-use crate::gateway::ConnectionStage;
-use log::{info, warn};
 
 #[cfg(feature = "voice")]
 use crate::client::bridge::voice::ClientVoiceManager;
@@ -42,8 +35,10 @@ const WAIT_BETWEEN_BOOTS_IN_SECONDS: u64 = 5;
 /// A shard queuer instance _should_ be run in its own thread, due to the
 /// blocking nature of the loop itself as well as a 5 second thread sleep
 /// between shard starts.
-pub struct ShardQueuer<H: EventHandler + Send + Sync + 'static,
-                       RH: RawEventHandler + Send + Sync + 'static> {
+pub struct ShardQueuer<
+    H: EventHandler + Send + Sync + 'static,
+    RH: RawEventHandler + Send + Sync + 'static,
+> {
     /// A copy of [`Client::data`] to be given to runners for contextual
     /// dispatching.
     ///
@@ -95,8 +90,9 @@ pub struct ShardQueuer<H: EventHandler + Send + Sync + 'static,
     pub cache_and_http: Arc<CacheAndHttp>,
 }
 
-impl<H: EventHandler + Send + Sync + 'static,
-     RH: RawEventHandler + Send + Sync + 'static> ShardQueuer<H, RH> {
+impl<H: EventHandler + Send + Sync + 'static, RH: RawEventHandler + Send + Sync + 'static>
+    ShardQueuer<H, RH>
+{
     /// Begins the shard queuer loop.
     ///
     /// This will loop over the internal [`rx`] for [`ShardQueuerMessage`]s,
@@ -130,12 +126,12 @@ impl<H: EventHandler + Send + Sync + 'static,
                 Ok(ShardQueuerMessage::Shutdown) => break,
                 Ok(ShardQueuerMessage::Start(id, total)) => {
                     self.checked_start(id.0, total.0);
-                },
+                }
                 Err(RecvTimeoutError::Disconnected) => {
                     // If the sender half has disconnected then the queuer's
                     // lifespan has passed and can shutdown.
                     break;
-                },
+                }
                 Err(RecvTimeoutError::Timeout) => {
                     if let Some((id, total)) = self.queue.pop_front() {
                         self.checked_start(id, total);

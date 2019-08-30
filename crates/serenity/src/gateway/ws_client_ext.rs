@@ -1,12 +1,12 @@
-use chrono::Utc;
 use crate::constants::{self, OpCode};
 use crate::gateway::{CurrentPresence, WsClient};
 use crate::internal::prelude::*;
 use crate::internal::ws_impl::SenderExt;
 use crate::model::id::GuildId;
+use chrono::Utc;
+use log::{debug, trace};
 use serde_json::json;
 use std::env::consts;
-use log::{debug, trace};
 
 pub trait WebSocketGatewayClientExt {
     fn send_chunk_guilds<It>(
@@ -15,13 +15,13 @@ pub trait WebSocketGatewayClientExt {
         shard_info: &[u64; 2],
         limit: Option<u16>,
         query: Option<&str>,
-    ) -> Result<()> where It: IntoIterator<Item=GuildId>;
+    ) -> Result<()>
+    where
+        It: IntoIterator<Item = GuildId>;
 
-    fn send_heartbeat(&mut self, shard_info: &[u64; 2], seq: Option<u64>)
-        -> Result<()>;
+    fn send_heartbeat(&mut self, shard_info: &[u64; 2], seq: Option<u64>) -> Result<()>;
 
-    fn send_identify(&mut self, shard_info: &[u64; 2], token: &str)
-        -> Result<()>;
+    fn send_identify(&mut self, shard_info: &[u64; 2], token: &str) -> Result<()>;
 
     fn send_presence_update(
         &mut self,
@@ -45,7 +45,10 @@ impl WebSocketGatewayClientExt for WsClient {
         shard_info: &[u64; 2],
         limit: Option<u16>,
         query: Option<&str>,
-    ) -> Result<()> where It: IntoIterator<Item=GuildId> {
+    ) -> Result<()>
+    where
+        It: IntoIterator<Item = GuildId>,
+    {
         debug!("[Shard {:?}] Requesting member chunks", shard_info);
 
         self.send_json(&json!({
@@ -55,21 +58,21 @@ impl WebSocketGatewayClientExt for WsClient {
                 "limit": limit.unwrap_or(0),
                 "query": query.unwrap_or(""),
             },
-        })).map_err(From::from)
+        }))
+        .map_err(From::from)
     }
 
-    fn send_heartbeat(&mut self, shard_info: &[u64; 2], seq: Option<u64>)
-        -> Result<()> {
+    fn send_heartbeat(&mut self, shard_info: &[u64; 2], seq: Option<u64>) -> Result<()> {
         trace!("[Shard {:?}] Sending heartbeat d: {:?}", shard_info, seq);
 
         self.send_json(&json!({
             "d": seq,
             "op": OpCode::Heartbeat.num(),
-        })).map_err(From::from)
+        }))
+        .map_err(From::from)
     }
 
-    fn send_identify(&mut self, shard_info: &[u64; 2], token: &str)
-        -> Result<()> {
+    fn send_identify(&mut self, shard_info: &[u64; 2], token: &str) -> Result<()> {
         debug!("[Shard {:?}] Identifying", shard_info);
 
         self.send_json(&json!({
@@ -130,6 +133,7 @@ impl WebSocketGatewayClientExt for WsClient {
                 "seq": seq,
                 "token": token,
             },
-        })).map_err(From::from)
+        }))
+        .map_err(From::from)
     }
 }

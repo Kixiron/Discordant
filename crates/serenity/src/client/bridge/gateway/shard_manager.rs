@@ -1,34 +1,29 @@
+use super::super::super::{EventHandler, RawEventHandler};
+use super::{
+    ShardClientMessage, ShardId, ShardManagerMessage, ShardManagerMonitor, ShardQueuer,
+    ShardQueuerMessage, ShardRunnerInfo,
+};
 use crate::gateway::InterMessage;
 use crate::internal::prelude::*;
 use crate::CacheAndHttp;
+use log::{info, warn};
 use parking_lot::Mutex;
 use parking_lot::RwLock;
 use std::{
     collections::{HashMap, VecDeque},
     sync::{
         mpsc::{self, Sender},
-        Arc
+        Arc,
     },
-    thread
-};
-use super::super::super::{EventHandler, RawEventHandler};
-use super::{
-    ShardClientMessage,
-    ShardId,
-    ShardManagerMessage,
-    ShardManagerMonitor,
-    ShardQueuer,
-    ShardQueuerMessage,
-    ShardRunnerInfo,
+    thread,
 };
 use threadpool::ThreadPool;
 use typemap::ShareMap;
-use log::{info, warn};
 
-#[cfg(feature = "framework")]
-use crate::framework::Framework;
 #[cfg(feature = "voice")]
 use crate::client::bridge::voice::ClientVoiceManager;
+#[cfg(feature = "framework")]
+use crate::framework::Framework;
 
 /// A manager for handling the status of shards by starting them, restarting
 /// them, and stopping them when required.
@@ -135,8 +130,10 @@ impl ShardManager {
     pub fn new<H, RH>(
         opt: ShardManagerOptions<'_, H, RH>,
     ) -> (Arc<Mutex<Self>>, ShardManagerMonitor)
-        where H: EventHandler + Send + Sync + 'static,
-              RH: RawEventHandler + Send + Sync + 'static {
+    where
+        H: EventHandler + Send + Sync + 'static,
+        RH: RawEventHandler + Send + Sync + 'static,
+    {
         let (thread_tx, thread_rx) = mpsc::channel();
         let (shard_queue_tx, shard_queue_rx) = mpsc::channel();
 
@@ -173,10 +170,13 @@ impl ShardManager {
             runners,
         }));
 
-        (Arc::clone(&manager), ShardManagerMonitor {
-            rx: thread_rx,
-            manager,
-        })
+        (
+            Arc::clone(&manager),
+            ShardManagerMonitor {
+                rx: thread_rx,
+                manager,
+            },
+        )
     }
 
     /// Returns whether the shard manager contains either an active instance of
@@ -292,11 +292,7 @@ impl ShardManager {
             let msg = InterMessage::Client(Box::new(client_msg));
 
             if let Err(why) = runner.runner_tx.send(msg) {
-                warn!(
-                    "Failed to cleanly shutdown shard {}: {:?}",
-                    shard_id,
-                    why,
-                );
+                warn!("Failed to cleanly shutdown shard {}: {:?}", shard_id, why,);
             }
         }
 
@@ -356,7 +352,11 @@ impl Drop for ShardManager {
     }
 }
 
-pub struct ShardManagerOptions<'a, H: EventHandler + Send + Sync + 'static, RH: RawEventHandler + Send + Sync + 'static> {
+pub struct ShardManagerOptions<
+    'a,
+    H: EventHandler + Send + Sync + 'static,
+    RH: RawEventHandler + Send + Sync + 'static,
+> {
     pub data: &'a Arc<RwLock<ShareMap>>,
     pub event_handler: &'a Option<Arc<H>>,
     pub raw_event_handler: &'a Option<Arc<RH>>,

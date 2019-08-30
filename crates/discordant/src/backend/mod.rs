@@ -8,6 +8,66 @@ use futures::channel::mpsc::{self, Receiver, Sender};
 use serenity::prelude::Mutex;
 use std::{sync::Arc, thread};
 
+pub fn main() -> (
+    Discord,
+    Receiver<BackendMsg>,
+    Sender<String>,
+    Receiver<Vec<u8>>,
+) {
+    let (discord, backend_recv) = Discord::spawn(std::env::var("DISCORD_TOKEN").unwrap());
+
+    let (url_sender, url_recv) = mpsc::channel(100);
+    let (file_sender, file_recv) = mpsc::channel(100);
+
+    std::thread::spawn(|| {
+        let runtime = tokio::runtime::Builder::new()
+            .name_prefix("backend-")
+            .build()
+            .unwrap();
+
+        runtime.block_on(async_main(url_recv, file_sender));
+    });
+
+    (discord, backend_recv, url_sender, file_recv)
+}
+
+async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<Vec<u8>>) {
+    use futures::{
+        sink::SinkExt,
+        stream::{StreamExt, TryStreamExt},
+    };
+    use hyper::{client::Client, Uri};
+    use std::str::FromStr;
+
+    let https = hyper_tls::HttpsConnector::new().unwrap();
+    let client = Client::builder().build::<_, hyper::Body>(https);
+
+    while let Some(url) = url_recv.next().await {
+        let client = client.clone();
+        let url = Uri::from_str(&url).expect("Failed to parse URL");
+
+        let mut file_sender = file_sender.clone();
+
+        tokio::spawn(async move {
+            let file = match client.get(url).await {
+                Ok(file) => file,
+                Err(err) => {
+                    eprintln!("Http Error: {:?}", err);
+                    return;
+                }
+            }
+            .into_body()
+            .try_concat()
+            .await;
+
+            file_sender
+                .send(file.unwrap().to_vec())
+                .await
+                .expect("Failed to send file");
+        });
+    }
+}
+
 pub struct Discord {
     http: Arc<serenity::http::raw::Http>,
     shard_manager: Arc<Mutex<serenity::client::bridge::gateway::ShardManager>>,

@@ -6,9 +6,9 @@ mod ui;
 fn main() {
     dotenv::dotenv().unwrap();
 
-    let (_discord, backend_recv, url_sender, file_recv) = backend::main(
+    let (discord, backend_recv, url_sender, file_recv) = backend::main(
         std::env::var("DISCORD_TOKEN").expect("Missing token env var (DISCORD_TOKEN)"),
     );
 
-    ui::run(backend_recv, url_sender, file_recv);
+    ui::run(discord, backend_recv, url_sender, file_recv);
 }

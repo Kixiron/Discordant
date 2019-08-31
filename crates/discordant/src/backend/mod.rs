@@ -40,14 +40,14 @@ async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<ui::Deco
     use hyper::{client::Client, Uri};
     use std::str::FromStr;
 
-    let https = hyper_tls::HttpsConnector::new().unwrap();
-    let client = Client::builder().build::<_, hyper::Body>(https);
+    let client = {
+        let https = hyper_tls::HttpsConnector::new().expect("Failed to create HTTPS connector");
+        Client::builder().build::<_, hyper::Body>(https)
+    };
 
     while let Some(url) = url_recv.next().await {
-        let client = client.clone();
+        let (client, mut file_sender) = (client.clone(), file_sender.clone());
         let url = Uri::from_str(&url).expect("Failed to parse URL");
-
-        let mut file_sender = file_sender.clone();
 
         tokio::spawn(async move {
             let file = match client.get(url).await {
@@ -62,7 +62,9 @@ async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<ui::Deco
             .await;
 
             if let Some(decoded) = ui::decode_webp(&file.unwrap().to_vec()[..]) {
-                file_sender.send(decoded).await.unwrap();
+                if let Err(err) = file_sender.send(decoded).await {
+                    eprintln!("File Send Error: {:?}", err);
+                }
             }
         });
     }

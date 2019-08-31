@@ -1,5 +1,5 @@
 use crate::backend::BackendMsg;
-use futures::channel::mpsc::{self, Receiver, Sender};
+use futures::channel::mpsc::{Receiver, Sender};
 
 pub struct DecodedImageData(*mut u8, usize, i32, i32, i32);
 
@@ -9,13 +9,16 @@ use gdk::prelude::*;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, Orientation, WindowPosition};
-use serenity::model::{
-    channel::GuildChannel,
-    guild::{Member, PartialGuild},
-    id::ChannelId,
-    user::CurrentUser,
+use serenity::{
+    model::{
+        channel::GuildChannel,
+        guild::{Member, PartialGuild},
+        id::ChannelId,
+        user::CurrentUser,
+    },
+    prelude::Mutex,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct InitializationState {
@@ -38,7 +41,12 @@ fn rounded_image(pixbuf: gdk_pixbuf::Pixbuf, radius: f64) -> gtk::DrawingArea {
     img
 }
 
-fn build_ui(application: &gtk::Application, state: &InitializationState) {
+fn build_ui(
+    application: &gtk::Application,
+    state: &InitializationState,
+    mut download_url_input: Sender<String>,
+    downloaded_images_output: Arc<Mutex<Receiver<DecodedImageData>>>,
+) {
     let window = ApplicationWindow::new(application);
 
     window.set_title("Discordant");
@@ -60,17 +68,17 @@ fn build_ui(application: &gtk::Application, state: &InitializationState) {
     for guild in state.guilds.iter() {
         let guild_row = gtk::Box::new(Orientation::Horizontal, 0);
         if let Some(icon_url) = guild.0.icon_url() {
-            // TODO
-            /*
-            if let Ok(mut data) = reqwest::get(&icon_url) {
-                let mut buf = Vec::with_capacity(1024 * 64);
-                use std::io::Read;
-                data.read_to_end(&mut buf).unwrap();
-                let buf = &buf[..];
-                let pixbuf = bytes_to_pixbuf(&buf[..]);
-                const RADIUS: f64 = 25.0;
-                if let Some(pixbuf) = pixbuf {
-                    if let Some(pixbuf) = pixbuf.scale_simple(
+            use futures::{sink::SinkExt, stream::StreamExt};
+
+            if let Err(err) = futures::executor::block_on(download_url_input.send(icon_url)) {
+                eprintln!("URL Send Error: {:?}", err);
+            } else {
+                if let Some(file) =
+                    futures::executor::block_on(downloaded_images_output.lock().next())
+                {
+                    const RADIUS: f64 = 25.0;
+
+                    if let Some(pixbuf) = image_data_to_pixbuf(file).scale_simple(
                         (RADIUS * 2.0) as _,
                         (RADIUS * 2.0) as _,
                         gdk_pixbuf::InterpType::Bilinear,
@@ -79,7 +87,6 @@ fn build_ui(application: &gtk::Application, state: &InitializationState) {
                     }
                 }
             }
-            */
         }
         guild_row.add(&gtk::Label::new(Some(&guild.0.name)));
         guild_list.add(&guild_row);
@@ -99,17 +106,17 @@ fn build_ui(application: &gtk::Application, state: &InitializationState) {
         let member_row = gtk::Box::new(Orientation::Horizontal, 0);
         let user = member.user.read();
         if let Some(avatar_url) = user.avatar_url() {
-            // TODO
-            /*
-            if let Ok(mut data) = reqwest::get(&avatar_url) {
-                let mut buf = Vec::with_capacity(1024 * 64);
-                use std::io::Read;
-                data.read_to_end(&mut buf).unwrap();
-                let buf = &buf[..];
-                let pixbuf = bytes_to_pixbuf(&buf[..]);
-                const RADIUS: f64 = 15.0;
-                if let Some(pixbuf) = pixbuf {
-                    if let Some(pixbuf) = pixbuf.scale_simple(
+            use futures::{sink::SinkExt, stream::StreamExt};
+
+            if let Err(err) = futures::executor::block_on(download_url_input.send(avatar_url)) {
+                eprintln!("URL Send Error: {:?}", err);
+            } else {
+                if let Some(file) =
+                    futures::executor::block_on(downloaded_images_output.lock().next())
+                {
+                    const RADIUS: f64 = 25.0;
+
+                    if let Some(pixbuf) = image_data_to_pixbuf(file).scale_simple(
                         (RADIUS * 2.0) as _,
                         (RADIUS * 2.0) as _,
                         gdk_pixbuf::InterpType::Bilinear,
@@ -118,7 +125,6 @@ fn build_ui(application: &gtk::Application, state: &InitializationState) {
                     }
                 }
             }
-            */
         }
         member_row.pack_start(&gtk::Label::new(Some(&user.name)), true, true, 0);
         member_list.add(&member_row);
@@ -156,15 +162,15 @@ fn build_ui(application: &gtk::Application, state: &InitializationState) {
 }
 
 pub fn run(
+    _discord: crate::backend::Discord,
     mut discord_receiver: Receiver<BackendMsg>,
-    _download_url_input: Sender<String>,
-    _downloaded_images_output: Receiver<DecodedImageData>,
+    download_url_input: Sender<String>,
+    downloaded_images_output: Receiver<DecodedImageData>,
 ) {
     use futures::stream::StreamExt;
 
     // TODO: Using a timeout often fails because the backend is slow(er) to connect and boot,
     // should probably make a loading status system instead of a hard panic
-
     while let Some(initialization_state) = futures::executor::block_on(
         discord_receiver.next(), /* .timeout(std::time::Duration::from_secs(10)), */
     ) {
@@ -174,8 +180,14 @@ pub fn run(
             let application =
                 gtk::Application::new(Some("com.Discordant.Discordant"), Default::default())
                     .expect("Initialization failed...");
+            let downloaded_images_output = Arc::new(Mutex::new(downloaded_images_output));
             application.connect_activate(move |app| {
-                build_ui(app, &initialization_state);
+                build_ui(
+                    app,
+                    &initialization_state,
+                    download_url_input.clone(),
+                    Arc::clone(&downloaded_images_output),
+                );
             });
             application.run(&args);
             std::panic!();

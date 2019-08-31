@@ -53,7 +53,7 @@ pub enum BackendMsg {
     ReactionRmAll(ChannelId, MessageId),
     PresenceReplace(Vec<Presence>),
     PresenceUpdate(PresenceUpdateEvent),
-    Ready(Ready),
+    Ready(Ready, crate::ui::InitializationState),
     Resume(ResumedEvent),
     ShardStageUpdate(ShardStageUpdateEvent),
     TypingStart(TypingStartEvent),

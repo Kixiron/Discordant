@@ -7,14 +7,15 @@ pub use backend_message::BackendMsg;
 use futures::channel::mpsc::{self, Receiver, Sender};
 use serenity::prelude::Mutex;
 use std::{sync::Arc, thread};
+use crate::ui;
 
-pub fn main() -> (
+pub fn main(token: impl AsRef<str>) -> (
     Discord,
     Receiver<BackendMsg>,
     Sender<String>,
-    Receiver<Vec<u8>>,
+    Receiver<ui::DecodedImageData>,
 ) {
-    let (discord, backend_recv) = Discord::spawn(std::env::var("DISCORD_TOKEN").unwrap());
+    let (discord, backend_recv) = Discord::spawn(token);
 
     let (url_sender, url_recv) = mpsc::channel(100);
     let (file_sender, file_recv) = mpsc::channel(100);
@@ -31,7 +32,7 @@ pub fn main() -> (
     (discord, backend_recv, url_sender, file_recv)
 }
 
-async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<Vec<u8>>) {
+async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<ui::DecodedImageData>) {
     use futures::{
         sink::SinkExt,
         stream::{StreamExt, TryStreamExt},
@@ -60,10 +61,9 @@ async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<Vec<u8>>
             .try_concat()
             .await;
 
-            file_sender
-                .send(file.unwrap().to_vec())
-                .await
-                .expect("Failed to send file");
+            if let Some(decoded) = ui::decode_webp(&file.unwrap().to_vec()[..]) {
+                file_sender.send(decoded).await.unwrap();
+            }
         });
     }
 }
@@ -93,7 +93,7 @@ impl Discord {
         }
 
         thread::Builder::new()
-            .name("Backend".to_string())
+            .name("Serenity".to_string())
             .spawn(move || {
                 if let Err(err) = client.start() {
                     println!("Client error: {:?}", err);

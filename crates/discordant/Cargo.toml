@@ -8,6 +8,20 @@ edition = "2018"
 dotenv = "0.14.1"
 serde_json = "1.0.40"
 dashmap = "1.0.4"
+libwebp-sys = "0.2.0"
+glib = "0.8.1"
+cairo-rs  = "0.7.1"
+gio = "0.7.0"
+gdk = "0.11.0"
+crossbeam = "0.7.2"
+
+[dependencies.gdk-pixbuf]
+version = "0.7.0"
+features = ["v2_32"]
+
+[dependencies.gtk]
+version = "0.7.0"
+features = ["v3_16"]
 
 [dependencies.futures-preview]
 version = "=0.3.0-alpha.18"

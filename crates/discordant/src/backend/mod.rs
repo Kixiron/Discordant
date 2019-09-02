@@ -61,7 +61,7 @@ async fn async_main(mut url_recv: Receiver<String>, file_sender: Sender<ui::Deco
             .try_concat()
             .await;
 
-            if let Some(decoded) = ui::decode_webp(&file.unwrap().to_vec()[..]) {
+            if let Some(decoded) = ui::decode_webp(&file.unwrap()) {
                 if let Err(err) = file_sender.send(decoded).await {
                     eprintln!("File Send Error: {:?}", err);
                 }

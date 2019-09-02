@@ -13,7 +13,8 @@ glib = "0.8.1"
 cairo-rs  = "0.7.1"
 gio = "0.7.0"
 gdk = "0.11.0"
-crossbeam = "0.7.2"
+relm = "0.17.0"
+relm-derive = "0.17.0"
 
 [dependencies.gdk-pixbuf]
 version = "0.7.0"

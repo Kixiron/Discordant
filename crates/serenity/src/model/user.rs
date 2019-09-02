@@ -964,7 +964,7 @@ impl<'a> From<&'a User> for UserId {
 }
 
 #[cfg(feature = "model")]
-fn avatar_url(user_id: UserId, hash: Option<&String>) -> Option<String> {
+pub fn avatar_url(user_id: UserId, hash: Option<&String>) -> Option<String> {
     hash.map(|hash| {
         let ext = if hash.starts_with("a_") {
             "gif"
@@ -977,7 +977,7 @@ fn avatar_url(user_id: UserId, hash: Option<&String>) -> Option<String> {
 }
 
 #[cfg(feature = "model")]
-fn default_avatar_url(discriminator: u16) -> String {
+pub fn default_avatar_url(discriminator: u16) -> String {
     cdn!("/embed/avatars/{}.png", discriminator % 5u16)
 }
 

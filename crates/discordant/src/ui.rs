@@ -1,5 +1,9 @@
 use crate::backend;
-use futures::{sink::SinkExt, stream::StreamExt};
+use futures::{
+    channel::mpsc::{Receiver, Sender},
+    sink::SinkExt,
+    stream::StreamExt,
+};
 use gdk::prelude::ContextExt;
 use gtk::{
     BoxExt, ContainerExt, GtkWindowExt, Inhibit, Orientation, ScrolledWindowExt, TextViewExt,
@@ -23,6 +27,9 @@ pub enum Msg {
 pub struct Win {
     window: Window,
     discord: backend::Discord,
+    backend_recv: Receiver<backend::BackendMsg>,
+    url_sender: Sender<String>,
+    file_recv: Receiver<DecodedImageData>,
 }
 
 impl Update for Win {
@@ -35,6 +42,13 @@ impl Update for Win {
     }
 
     fn update(&mut self, event: Self::Msg) {
+        println!("here");
+        if let Some(msg) = futures::executor::block_on(self.backend_recv.next()) {
+            match msg {
+                msg => self.window.title = format!("{:?}", msg),
+            }
+        }
+
         match event {
             Msg::Quit => gtk::main_quit(),
         }
@@ -175,7 +189,13 @@ impl Widget for Win {
 
         window.show_all();
 
-        Self { window, discord }
+        Self {
+            window,
+            discord,
+            backend_recv,
+            url_sender,
+            file_recv,
+        }
     }
 }
 
